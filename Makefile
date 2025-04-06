@@ -1,0 +1,7 @@
+NAME = philosopher
+
+
+
+
+all :$(philosopher)
+
