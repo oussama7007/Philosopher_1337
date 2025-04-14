@@ -15,8 +15,7 @@ void *thread_routine(void *av)
     {
         pthread_mutex_lock(&da->lock);
         da->counter++;
-            pthread_mutex_unlock(&da->lock);
-
+        pthread_mutex_unlock(&da->lock);
         i++;
     }
 
