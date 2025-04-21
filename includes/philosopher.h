@@ -6,15 +6,15 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#
+typedef struct s_philo
+{
+    unsigned int       id;
+    unsigned int       meals_eaten;
 
-// typedef struct s_philo
-// {
-//     unsigned int       id;
-//     unsigned int       meals_eaten;
-
-//     pthread_mutex_t    l_fork;
-//     pthread_mutex_t     r_fork;
-// } t_philo;
+    pthread_mutex_t    l_fork;
+    pthread_mutex_t     r_fork;
+} t_philo;
 
 typedef struct s_prosses
 {
@@ -23,6 +23,7 @@ typedef struct s_prosses
     unsigned int T_eat;
     unsigned int T_sleep;
     unsigned int N_must_eat;
+    struct t_philo *philos
 } t_prosses;
 
 #endif 

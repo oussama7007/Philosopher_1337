@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/21 17:49:23 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/21 22:32:22 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,8 +99,6 @@ int     init_program(t_prosses *program, int ac, char **av)
             program->N_must_eat = -1;
         else 
             program->N_must_eat = ft_atou(av[4]);
-        
-        
 
 }
 int main(int ac, char **av)
