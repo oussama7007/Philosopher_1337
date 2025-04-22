@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/22 13:53:10 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/22 16:55:43 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 int is_valid(unsigned int n)
 {
     if(n == 0 ||  n > 2147483647)
-        return(-1);
+        return(0);
     return 1;
 }
 int is_digit(char *str)
@@ -27,19 +27,19 @@ int is_digit(char *str)
     if(str[i] == '-' || str[i] == '+')
     {
         if(str[i] == '-')
-            return -1;
+            return 0;
         i++;
     }
     while(str[i] && !(str[i] == ' ' || (str[i] >= 9 && str[i] <= 13)))
     {
         if(str[i] > '9' || str[i] < '0')
-            return -1;
+            return 0;
         i++;
     }
     while(str[i] && (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13)))
         i++;
     if(str[i] != '\0')
-        return -1;
+        return 0;
  
     return 1;
 }
@@ -70,9 +70,9 @@ int check_args(int ac, char **av)
     {
        
         if(is_digit(av[i]) != 1)
-            return -1;
+            return 0;
         if(is_valid(ft_atou(av[i])) != 1)
-            return -1;
+            return 0;
         
     }
     return 1;
@@ -105,11 +105,10 @@ int     allocate_resources(t_prosses *philo)
 {
     philo->fork = malloc(sizeof(pthread_mutex_t) * philo->N_philos);
     if(!philo->fork)
-        return -1;
+        return 0;
     philo->philos = malloc(sizeof(t_philo) * philo->N_philos);
     if(!philo->philos)
-        return -1;
-        
+        return 0;
 }
 int main(int ac, char **av)
 {
@@ -118,10 +117,11 @@ int main(int ac, char **av)
     
     if(ac < 5 || ac > 6)
         return(ft_putstr_fd("Error: args must be 4 OR 5\n", 2), 1);
-    if(check_args(ac , av) != 1)
+    if(!check_args(ac , av))
         return(ft_putstr_fd("Error: invalid arg \n", 2), 1);
     assigning_values(&philo, ac, av);
-    if(allocate_resources(&philo) != 1)
+    if(!allocate_resources(&philo) != 1)
         return(ft_putstr_fd("Error: allocation failed\n", 2), 1);
+    
     
 }

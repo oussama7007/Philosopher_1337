@@ -9,11 +9,11 @@
 
 typedef struct s_philo
 {
-	// unsigned int 					id;
-	// unsigned int 					meals_eaten;
+	// unsigned int			id;
+	// unsigned int 		meals_eaten;
 	// size_t				last_meal;
 	// pthread_t			thread;
-	// struct s_prosses	*program;
+	// struct s_prosses	    *program;
 	// pthread_mutex_t		*r_fork;
 	// pthread_mutex_t		*l_fork;
 }		t_philo ;
