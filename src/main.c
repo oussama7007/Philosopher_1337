@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/22 16:55:43 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/23 22:49:00 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,27 +101,50 @@ int     assigning_values(t_prosses *program, int ac, char **av)
             program->N_must_eat = ft_atou(av[4]);
 
 }
-int     allocate_resources(t_prosses *philo)
+int     allocate_resources(t_prosses *program)
 {
-    philo->fork = malloc(sizeof(pthread_mutex_t) * philo->N_philos);
-    if(!philo->fork)
+    program->fork = malloc(sizeof(pthread_mutex_t) * program->N_philos);
+    if(!program->fork)
         return 0;
-    philo->philos = malloc(sizeof(t_philo) * philo->N_philos);
-    if(!philo->philos)
+    program->philos = malloc(sizeof(t_philo) * program->N_philos);
+    if(!program->philos)
         return 0;
+}
+int init_mutexs(t_prosses *program)
+{
+    // if(pthread_mutex_init(&program->write_lock, NULL) != 0)
+    //     return(0);
+    // if(pthread_mutex_init(&program->dead_lock, NULL) != 0)
+    // {
+    //     pthread_mutex_destroy(&program->write_lock, NULL);
+            //return (1);
+    // }
+    
+}
+int init_program(t_prosses *program, int ac, char **av)
+{
+    assigning_values(&program, ac, av);
+    if(!allocate_resources(&program) != 1)
+        return(ft_putstr_fd("Error: allocation failed\n", 2), 0);
+    if(!(init_mutexs(program)))
+    {
+        free(program->philos);
+        free(program->fork);
+        return(ft_putstr_fd("Error: initialisation of mutexs failed\n", 2), 0);
+    }
+    init_philo(program);
+    return(1)
 }
 int main(int ac, char **av)
 {
-     t_prosses philo;
+     t_prosses program;
      pthread_t master;
     
     if(ac < 5 || ac > 6)
         return(ft_putstr_fd("Error: args must be 4 OR 5\n", 2), 1);
     if(!check_args(ac , av))
         return(ft_putstr_fd("Error: invalid arg \n", 2), 1);
-    assigning_values(&philo, ac, av);
-    if(!allocate_resources(&philo) != 1)
-        return(ft_putstr_fd("Error: allocation failed\n", 2), 1);
-    
-    
+    if(!(init_program(&program, ac, av)))
+        return 1;
+    if(!(creatr_philos_threads(&program))
 }
