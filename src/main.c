@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/23 22:49:00 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/23 23:13:29 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ void ft_putstr_fd(char *str, int fd)
         
     }
 }
-int     assigning_values(t_prosses *program, int ac, char **av)
+void     assigning_values(t_prosses *program, int ac, char **av)
 {
         program->N_philos = ft_atou(av[1]);
         program->T_die = ft_atou(av[2]);
@@ -112,15 +112,29 @@ int     allocate_resources(t_prosses *program)
 }
 int init_mutexs(t_prosses *program)
 {
+    int i;
     // if(pthread_mutex_init(&program->write_lock, NULL) != 0)
     //     return(0);
     // if(pthread_mutex_init(&program->dead_lock, NULL) != 0)
     // {
     //     pthread_mutex_destroy(&program->write_lock, NULL);
-            //return (1);
+            //return (0);
     // }
-    
+    i = -1;
+    while(++i < program->N_philos)
+    {
+        if(pthread_mutex_init(&program->fork[i], NULL) != 0)
+        {
+            while(--i >= 0)
+                pthrad_mutex_init(&program->fork[i]);
+            pthrad_mutex_destroy(&program->write_lock);
+            pthread_mutex_destroy(&program->dead_lock);
+            return(0);
+        }
+    }
+    return 1;
 }
+void 
 int init_program(t_prosses *program, int ac, char **av)
 {
     assigning_values(&program, ac, av);
@@ -146,5 +160,6 @@ int main(int ac, char **av)
         return(ft_putstr_fd("Error: invalid arg \n", 2), 1);
     if(!(init_program(&program, ac, av)))
         return 1;
-    if(!(creatr_philos_threads(&program))
+   // if(!(creatr_philos_threads(&program)))
+        
 }
