@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/23 23:13:29 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/24 16:35:39 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,8 +103,8 @@ void     assigning_values(t_prosses *program, int ac, char **av)
 }
 int     allocate_resources(t_prosses *program)
 {
-    program->fork = malloc(sizeof(pthread_mutex_t) * program->N_philos);
-    if(!program->fork)
+    program->forks = malloc(sizeof(pthread_mutex_t) * program->N_philos);
+    if(!program->forks)
         return 0;
     program->philos = malloc(sizeof(t_philo) * program->N_philos);
     if(!program->philos)
@@ -123,18 +123,32 @@ int init_mutexs(t_prosses *program)
     i = -1;
     while(++i < program->N_philos)
     {
-        if(pthread_mutex_init(&program->fork[i], NULL) != 0)
+        if(pthread_mutex_init(&program->forks[i], NULL) != 0)
         {
             while(--i >= 0)
-                pthrad_mutex_init(&program->fork[i]);
-            pthrad_mutex_destroy(&program->write_lock);
+                pthread_mutex_init(&program->forks[i]);
+            pthread_mutex_destroy(&program->write_lock);
             pthread_mutex_destroy(&program->dead_lock);
             return(0);
         }
     }
     return 1;
 }
-void 
+void init_philo(t_prosses *program)
+{
+    int i;
+    
+    i = -1;
+    while(++i < program->N_philos)
+    {
+        program->philos[i].id = i + 1;
+        program->philos[i].meals_eaten = 0;
+        program->philos[i].last_meal = program->start_time;
+        program->philos[i].r_fork = &program->forks[i];
+        program->philos[i].l_fork = 
+        
+    }
+}
 int init_program(t_prosses *program, int ac, char **av)
 {
     assigning_values(&program, ac, av);
@@ -143,7 +157,7 @@ int init_program(t_prosses *program, int ac, char **av)
     if(!(init_mutexs(program)))
     {
         free(program->philos);
-        free(program->fork);
+        free(program->forks);
         return(ft_putstr_fd("Error: initialisation of mutexs failed\n", 2), 0);
     }
     init_philo(program);

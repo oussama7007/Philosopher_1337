@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 typedef struct s_philo
 {
@@ -27,7 +28,8 @@ typedef struct s_prosses
     unsigned int N_must_eat;
     pthread_mutex_t	write_lock;
 	pthread_mutex_t	dead_lock;
-    pthread_mutex_t  *fork;
+    pthread_mutex_t  *forks;
+    unsigned int    start_time;
     t_philo *philos;
 } t_prosses;
 
