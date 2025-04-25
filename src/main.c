@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/25 18:48:09 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/25 22:47:01 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,8 +89,10 @@ void ft_putstr_fd(char *str, int fd)
         
     }
 }
-void     assigning_values(t_prosses *program, int ac, char **av)
+int     assigning_values(t_prosses *program, int ac, char **av)
 {
+        struct timeval tv;
+        
         program->N_philos = ft_atou(av[1]);
         program->T_die = ft_atou(av[2]);
         program->T_eat = ft_atou(av[3]);
@@ -99,7 +101,9 @@ void     assigning_values(t_prosses *program, int ac, char **av)
             program->N_must_eat = 0;
         else 
             program->N_must_eat = ft_atou(av[4]);
-        program->start_time = gettimeofday();
+        if(gettimeofday(&tv, NULL) != 0)
+            return(ft_putstr_fd("gettimeofday failed\n:", 2), 0);
+        program->start_time = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 
 }
 int     allocate_resources(t_prosses *program)
@@ -153,8 +157,7 @@ void init_philo(t_prosses *program)
 }
 int init_program(t_prosses *program, int ac, char **av)
 {
-    assigning_values(program, ac, av);
-    if(allocate_resources(program) != 1)
+    if(allocate_resources(program) != 1 ||  assigning_values(program, ac, av) != 1)
         return(ft_putstr_fd("Error: allocation failed\n", 2), 0);
     if(!(init_mutexs(program)))
     {

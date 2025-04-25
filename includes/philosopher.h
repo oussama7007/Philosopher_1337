@@ -7,6 +7,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 typedef struct s_philo
 {
@@ -33,4 +34,8 @@ typedef struct s_prosses
     t_philo *philos;
 } t_prosses;
 
+
+
+//Simulate eating for T_eat milliseconds
+//usleep(program->time_to_eat * 1000);
 #endif 
