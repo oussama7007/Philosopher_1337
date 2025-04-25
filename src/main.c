@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/24 16:35:39 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/25 18:48:09 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,9 +96,10 @@ void     assigning_values(t_prosses *program, int ac, char **av)
         program->T_eat = ft_atou(av[3]);
         program->T_sleep = ft_atou(av[4]);
         if(ac == 5)
-            program->N_must_eat = -1;
+            program->N_must_eat = 0;
         else 
             program->N_must_eat = ft_atou(av[4]);
+        program->start_time = gettimeofday();
 
 }
 int     allocate_resources(t_prosses *program)
@@ -109,24 +110,25 @@ int     allocate_resources(t_prosses *program)
     program->philos = malloc(sizeof(t_philo) * program->N_philos);
     if(!program->philos)
         return 0;
+    return 1;
 }
 int init_mutexs(t_prosses *program)
 {
     int i;
-    // if(pthread_mutex_init(&program->write_lock, NULL) != 0)
-    //     return(0);
-    // if(pthread_mutex_init(&program->dead_lock, NULL) != 0)
-    // {
-    //     pthread_mutex_destroy(&program->write_lock, NULL);
-            //return (0);
-    // }
+    if(pthread_mutex_init(&program->write_lock, NULL) != 0)
+         return(0);
+    if(pthread_mutex_init(&program->dead_lock, NULL) != 0)
+    {
+         pthread_mutex_destroy(&program->write_lock);
+            return (0);
+    }
     i = -1;
     while(++i < program->N_philos)
     {
         if(pthread_mutex_init(&program->forks[i], NULL) != 0)
         {
             while(--i >= 0)
-                pthread_mutex_init(&program->forks[i]);
+                pthread_mutex_init(&program->forks[i], NULL);
             pthread_mutex_destroy(&program->write_lock);
             pthread_mutex_destroy(&program->dead_lock);
             return(0);
@@ -145,14 +147,14 @@ void init_philo(t_prosses *program)
         program->philos[i].meals_eaten = 0;
         program->philos[i].last_meal = program->start_time;
         program->philos[i].r_fork = &program->forks[i];
-        program->philos[i].l_fork = 
+        program->philos[i].l_fork = &program->forks[(i + 1) % program->N_philos];
         
     }
 }
 int init_program(t_prosses *program, int ac, char **av)
 {
-    assigning_values(&program, ac, av);
-    if(!allocate_resources(&program) != 1)
+    assigning_values(program, ac, av);
+    if(allocate_resources(program) != 1)
         return(ft_putstr_fd("Error: allocation failed\n", 2), 0);
     if(!(init_mutexs(program)))
     {
@@ -161,7 +163,7 @@ int init_program(t_prosses *program, int ac, char **av)
         return(ft_putstr_fd("Error: initialisation of mutexs failed\n", 2), 0);
     }
     init_philo(program);
-    return(1)
+    return(1);
 }
 int main(int ac, char **av)
 {
@@ -174,6 +176,6 @@ int main(int ac, char **av)
         return(ft_putstr_fd("Error: invalid arg \n", 2), 1);
     if(!(init_program(&program, ac, av)))
         return 1;
-   // if(!(creatr_philos_threads(&program)))
-        
+    if(!(creatr_philos_threads(&program)))
+         return 1;
 }
