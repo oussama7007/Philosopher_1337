@@ -26,7 +26,7 @@ typedef struct s_prosses
     unsigned int T_die;
     unsigned int T_eat;
     unsigned int T_sleep;
-    unsigned int N_must_eat;
+    int         N_must_eat;
     pthread_mutex_t	write_lock;
 	pthread_mutex_t	dead_lock;
     pthread_mutex_t  *forks;
@@ -38,4 +38,8 @@ typedef struct s_prosses
 
 //Simulate eating for T_eat milliseconds
 //usleep(program->time_to_eat * 1000);
+
+
+
+//The is_valid function checks if a number exceeds 2147483647 (max int), but your variables are unsigned int (max 4294967295). This mismatch could allow values up to 4294967295, which may not align with project intent if a lower limit is expected
 #endif 

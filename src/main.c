@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/25 22:47:01 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/29 18:07:20 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,7 +132,7 @@ int init_mutexs(t_prosses *program)
         if(pthread_mutex_init(&program->forks[i], NULL) != 0)
         {
             while(--i >= 0)
-                pthread_mutex_init(&program->forks[i], NULL);
+                pthread_mutex_destroy(&program->forks[i]);
             pthread_mutex_destroy(&program->write_lock);
             pthread_mutex_destroy(&program->dead_lock);
             return(0);
@@ -152,7 +152,6 @@ void init_philo(t_prosses *program)
         program->philos[i].last_meal = program->start_time;
         program->philos[i].r_fork = &program->forks[i];
         program->philos[i].l_fork = &program->forks[(i + 1) % program->N_philos];
-        
     }
 }
 int init_program(t_prosses *program, int ac, char **av)
@@ -170,9 +169,10 @@ int init_program(t_prosses *program, int ac, char **av)
 }
 int main(int ac, char **av)
 {
-     t_prosses program;
+    t_prosses program;
      pthread_t master;
     
+
     if(ac < 5 || ac > 6)
         return(ft_putstr_fd("Error: args must be 4 OR 5\n", 2), 1);
     if(!check_args(ac , av))
