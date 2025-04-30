@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/29 18:07:20 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/04/30 12:51:52 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,18 +167,34 @@ int init_program(t_prosses *program, int ac, char **av)
     init_philo(program);
     return(1);
 }
+void    thread_routine(void *arg)
+{
+    
+}
+int     create_philos_treads(t_prosses *program)
+{
+    int i;
+
+    i = -1;
+    while(++i < program->N_philos)
+    {
+        if(pthread_create(&program->philos[i].thread, NULL, thread_routine, &program->philos[i]) != 0)
+        {
+            
+        }
+    }
+}
 int main(int ac, char **av)
 {
     t_prosses program;
      pthread_t master;
     
-
     if(ac < 5 || ac > 6)
         return(ft_putstr_fd("Error: args must be 4 OR 5\n", 2), 1);
     if(!check_args(ac , av))
         return(ft_putstr_fd("Error: invalid arg \n", 2), 1);
     if(!(init_program(&program, ac, av)))
         return 1;
-    if(!(creatr_philos_threads(&program)))
+    if(!(create_philos_threads(&program)))
          return 1;
 }
