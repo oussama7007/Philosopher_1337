@@ -26,7 +26,7 @@ typedef struct s_prosses
     unsigned int T_die;
     unsigned int T_eat;
     unsigned int T_sleep;
-    int         N_must_eat;
+    int          N_must_eat;
     pthread_mutex_t	write_lock;
 	pthread_mutex_t	dead_lock;
     pthread_mutex_t  *forks;

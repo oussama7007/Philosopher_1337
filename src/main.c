@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/04/30 17:02:24 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/05/02 23:19:30 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,6 @@ int check_args(int ac, char **av)
     i = 0;
     while(++i < ac)
     {
-       
         if(is_digit(av[i]) != 1)
             return 0;
         if(is_valid(ft_atou(av[i])) != 1)
@@ -135,6 +134,7 @@ int init_mutexs(t_prosses *program)
                 pthread_mutex_destroy(&program->forks[i]);
             pthread_mutex_destroy(&program->write_lock);
             pthread_mutex_destroy(&program->dead_lock);
+            
             return(0);
         }
     }
@@ -167,21 +167,22 @@ int init_program(t_prosses *program, int ac, char **av)
     init_philo(program);
     return(1);
 }
-void    thread_routine(void *arg)
+void    *philosopher_routine(void *arg)
+{}
+void    *monitor_routine(void *arg)
 {
     
 }
-int     create_philos_treads(t_prosses *program , pthread_t master)
+int     create_philos_treads(t_prosses *program , pthread_t *master)
 {
     int i;
     i = -1;
     while(++i < program->N_philos)
     {
-        if(pthread_create(&program->philos[i].thread, NULL, thread_routine, &program->philos[i]) != 0)
-        {
-            
-        }
+        if(pthread_create(&program->philos[i].thread, NULL, philosopher_routine, &program->philos[i]) != 0)
+            return 0;
     }
+    pthread_create(&master, NULL, monitor_routine,  )
 }
 int main(int ac, char **av)
 {
