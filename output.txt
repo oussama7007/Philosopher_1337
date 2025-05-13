@@ -1,3 +1,0 @@
--rw-r--r--  1 oait-si-  2024_khouribga    0 May  1 16:45 output.txt
--rw-r--r--  1 oait-si-  2024_khouribga   68 May  1 16:45 output.txt
--rw-r--r--  1 oait-si-  2024_khouribga  136 May  1 16:46 output.txt
