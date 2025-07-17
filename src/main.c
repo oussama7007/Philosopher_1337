@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
+/*   By: oussama <oussama@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/05/02 23:19:30 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/07/17 18:24:38 by oussama          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,14 +166,28 @@ int init_program(t_prosses *program, int ac, char **av)
     }
     init_philo(program);
     return(1);
+int     
 }
 void    *philosopher_routine(void *arg)
-{}
-void    *monitor_routine(void *arg)
 {
-    
-}
-int     create_philos_treads(t_prosses *program , pthread_t *master)
+       // khas ykoun lifecycle dyal koula philo think and eat and sleep 
+       //makhesch ykoun deadlock
+       // khas loop thbes fach kaymout chiwahed fihoum ola ila cheb3o kamlin 
+
+       // Cast the void pointer to get access to this philosopher's data.
+       
+        // Assuming you add a 'program' pointer to t_philo
+             // The main lifecycle loop.
+                 // Check if the simulation should end.
+            //eat 
+            //sleep
+            //think
+    t_philo *philo = (t_philo *)arg;
+
+             
+        
+};
+int     create_philos_threads(t_prosses *program , pthread_t *master)
 {
     int i;
     i = -1;
@@ -182,7 +196,7 @@ int     create_philos_treads(t_prosses *program , pthread_t *master)
         if(pthread_create(&program->philos[i].thread, NULL, philosopher_routine, &program->philos[i]) != 0)
             return 0;
     }
-    pthread_create(&master, NULL, monitor_routine,  )
+    return 1;
 }
 int main(int ac, char **av)
 {
