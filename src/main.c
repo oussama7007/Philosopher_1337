@@ -6,7 +6,7 @@
 /*   By: oussama <oussama@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/07/17 18:24:38 by oussama          ###   ########.fr       */
+/*   Updated: 2025/07/19 20:46:42 by oussama          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,12 @@ void ft_putstr_fd(char *str, int fd)
         
     }
 }
-int     assigning_values(t_prosses *program, int ac, char **av)
+long long     get_current_time(void)
+{
+    struct timeval tv;
+    return((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+}
+int     assigning_values(t_process *program, int ac, char **av)
 {
         struct timeval tv;
         
@@ -96,33 +101,34 @@ int     assigning_values(t_prosses *program, int ac, char **av)
         program->T_die = ft_atou(av[2]);
         program->T_eat = ft_atou(av[3]);
         program->T_sleep = ft_atou(av[4]);
+        program->dead_flag = 0;
         if(ac == 5)
             program->N_must_eat = 0;
         else 
-            program->N_must_eat = ft_atou(av[4]);
+            program->N_must_eat = ft_atou(av[5]);
         if(gettimeofday(&tv, NULL) != 0)
             return(ft_putstr_fd("gettimeofday failed\n:", 2), 0);
-        program->start_time = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+        program->start_time = get_current_time();
 
 }
-int     allocate_resources(t_prosses *program)
+int     allocate_resources(t_process *program)
 {
     program->forks = malloc(sizeof(pthread_mutex_t) * program->N_philos);
     if(!program->forks)
         return 0;
     program->philos = malloc(sizeof(t_philo) * program->N_philos);
     if(!program->philos)
-        return 0;
+            return(free(program->forks), 0);
     return 1;
 }
-int init_mutexs(t_prosses *program)
+int init_mutexs(t_process *program)
 {
     int i;
     if(pthread_mutex_init(&program->write_lock, NULL) != 0)
          return(0);
     if(pthread_mutex_init(&program->dead_lock, NULL) != 0)
     {
-         pthread_mutex_destroy(&program->write_lock);
+        pthread_mutex_destroy(&program->write_lock);
             return (0);
     }
     i = -1;
@@ -134,13 +140,12 @@ int init_mutexs(t_prosses *program)
                 pthread_mutex_destroy(&program->forks[i]);
             pthread_mutex_destroy(&program->write_lock);
             pthread_mutex_destroy(&program->dead_lock);
-            
             return(0);
         }
     }
     return 1;
 }
-void init_philo(t_prosses *program)
+void init_philo(t_process *program)
 {
     int i;
     
@@ -152,11 +157,12 @@ void init_philo(t_prosses *program)
         program->philos[i].last_meal = program->start_time;
         program->philos[i].r_fork = &program->forks[i];
         program->philos[i].l_fork = &program->forks[(i + 1) % program->N_philos];
+        program->philos[i].program = program;
     }
 }
-int init_program(t_prosses *program, int ac, char **av)
+int init_program(t_process *program, int ac, char **av)
 {
-    if(allocate_resources(program) != 1 ||  assigning_values(program, ac, av) != 1)
+    if( assigning_values(program, ac, av) != 1 || allocate_resources(program) != 1)
         return(ft_putstr_fd("Error: allocation failed\n", 2), 0);
     if(!(init_mutexs(program)))
     {
@@ -166,28 +172,88 @@ int init_program(t_prosses *program, int ac, char **av)
     }
     init_philo(program);
     return(1);
-int     
+
 }
+
+void    print_philo_status(t_philo *philo, char *string)
+{ 
+    t_process *process_status = philo->program;
+    
+    pthread_mutex_lock(&process_status->write_lock);
+        printf("%lu %d %s", get_current_time() - process_status->start_time , philo->id, string); //timestamp_in_ms X has taken a fork   timestamp_in_ms X is eating
+    pthread_mutex_unlock(&process_status->write_lock);
+}
+
+void    philo_eat(t_philo *philo)
+{
+    t_process *eat_process = philo->program;
+    print_philo_status(&philo, "is eating");
+    
+    if(philo->id % 2 == 0)
+    {
+        pthread_mutex_lock(philo->l_fork);
+        print_philo_status(philo, "has taken a fork");
+        pthread_mutex_lock(philo->r_fork);
+        print_philo_status(philo, "has taken a fork");
+    }
+    else 
+    {
+        pthread_mutex_lock(philo->r_fork);
+        print_philo_status(philo, "has taken a fork");
+        pthread_mutex_lock(philo->l_fork);
+        print_philo_status(philo, "has taken a fork"); 
+    }
+    print_philo_status(philo, "is eating");
+    usleep(eat_process->T_eat * 1000);
+    pthread_mutex_unlock(philo->l_fork);
+    pthread_mutex_unlock(philo->r_fork);
+}
+void    philo_think(t_philo *philo)
+{
+    print_philo_status(philo, "is thinking");
+}
+void    philo_sleep(t_philo *philo)
+{
+    print_philo_status(&philo, "is sleeping");
+    usleep(philo->program->T_sleep * 1000);
+}
+
 void    *philosopher_routine(void *arg)
 {
+       t_philo *philo = (t_philo *)arg;
+        t_process *program = philo->program;
+        if(philo->id %2 == 0)
+            usleep(1000);
+        while(1)
+        {
+            pthread_mutex_lock(&program->dead_lock);
+            if(program->dead_flag == 1)
+            {
+                pthread_mutex_unlock(&program->dead_lock);
+                break;
+            }
+            pthread_mutex_unlock(&program->dead_lock);
+            
+            philo_eat(philo);
+            philo_think(philo);
+            philo_sleep(philo);
+        }
        // khas ykoun lifecycle dyal koula philo think and eat and sleep 
        //makhesch ykoun deadlock
        // khas loop thbes fach kaymout chiwahed fihoum ola ila cheb3o kamlin 
 
        // Cast the void pointer to get access to this philosopher's data.
        
-        // Assuming you add a 'program' pointer to t_philo
+       // Assuming you add a 'program' pointer to t_philo
              // The main lifecycle loop.
                  // Check if the simulation should end.
             //eat 
             //sleep
             //think
-    t_philo *philo = (t_philo *)arg;
+    
+}
 
-             
-        
-};
-int     create_philos_threads(t_prosses *program , pthread_t *master)
+int     create_philos_threads(t_process *program , pthread_t *master)
 {
     int i;
     i = -1;
@@ -198,9 +264,10 @@ int     create_philos_threads(t_prosses *program , pthread_t *master)
     }
     return 1;
 }
+
 int main(int ac, char **av)
 {
-    t_prosses program;
+    t_process program;
     pthread_t master;
     
     if(ac < 5 || ac > 6)
