@@ -6,11 +6,12 @@
 /*   By: oussama <oussama@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/07/19 20:46:42 by oussama          ###   ########.fr       */
+/*   Updated: 2025/07/21 23:58:19 by oussama          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/philosopher.h"
+
 int is_valid(unsigned int n)
 {
     if(n == 0 ||  n > 2147483647)
@@ -91,6 +92,8 @@ void ft_putstr_fd(char *str, int fd)
 long long     get_current_time(void)
 {
     struct timeval tv;
+    if(gettimeofday(&tv, NULL))
+        return (-1);
     return((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
 int     assigning_values(t_process *program, int ac, char **av)
@@ -102,15 +105,18 @@ int     assigning_values(t_process *program, int ac, char **av)
         program->T_eat = ft_atou(av[3]);
         program->T_sleep = ft_atou(av[4]);
         program->dead_flag = 0;
-        if(ac == 5)
-            program->N_must_eat = 0;
-        else 
+        program->all_philos_eat = 0;
+        if (ac == 6)
             program->N_must_eat = ft_atou(av[5]);
-        if(gettimeofday(&tv, NULL) != 0)
-            return(ft_putstr_fd("gettimeofday failed\n:", 2), 0);
+        else
+            program->N_must_eat = -1; 
         program->start_time = get_current_time();
+        if(program->start_time < 0)
+            return(ft_putstr_fd("gettimeofday failed\n", 2), 0);
+        return 1;
 
 }
+
 int     allocate_resources(t_process *program)
 {
     program->forks = malloc(sizeof(pthread_mutex_t) * program->N_philos);
@@ -180,14 +186,15 @@ void    print_philo_status(t_philo *philo, char *string)
     t_process *process_status = philo->program;
     
     pthread_mutex_lock(&process_status->write_lock);
-        printf("%lu %d %s", get_current_time() - process_status->start_time , philo->id, string); //timestamp_in_ms X has taken a fork   timestamp_in_ms X is eating
+    if(!process_status->dead_flag && !process_status->all_philos_eat)
+        printf("%lld %d %s\n", get_current_time() - process_status->start_time , philo->id, string); //timestamp_in_ms X has taken a fork   timestamp_in_ms X is eating
     pthread_mutex_unlock(&process_status->write_lock);
 }
 
 void    philo_eat(t_philo *philo)
 {
     t_process *eat_process = philo->program;
-    print_philo_status(&philo, "is eating");
+   
     
     if(philo->id % 2 == 0)
     {
@@ -203,18 +210,25 @@ void    philo_eat(t_philo *philo)
         pthread_mutex_lock(philo->l_fork);
         print_philo_status(philo, "has taken a fork"); 
     }
-    print_philo_status(philo, "is eating");
+    pthread_mutex_lock(&eat_process->dead_lock);
+    print_philo_status(philo, "is eating\n");
+    philo->last_meal = get_current_time();
+    philo->meals_eaten++;
+    pthread_mutex_unlock(&eat_process->dead_lock);
+    
     usleep(eat_process->T_eat * 1000);
+    
     pthread_mutex_unlock(philo->l_fork);
     pthread_mutex_unlock(philo->r_fork);
 }
+
 void    philo_think(t_philo *philo)
 {
     print_philo_status(philo, "is thinking");
 }
 void    philo_sleep(t_philo *philo)
 {
-    print_philo_status(&philo, "is sleeping");
+    print_philo_status(philo, "is sleeping");
     usleep(philo->program->T_sleep * 1000);
 }
 
@@ -227,7 +241,7 @@ void    *philosopher_routine(void *arg)
         while(1)
         {
             pthread_mutex_lock(&program->dead_lock);
-            if(program->dead_flag == 1)
+            if(program->dead_flag  || program->all_philos_eat)
             {
                 pthread_mutex_unlock(&program->dead_lock);
                 break;
@@ -237,21 +251,22 @@ void    *philosopher_routine(void *arg)
             philo_eat(philo);
             philo_think(philo);
             philo_sleep(philo);
+            
         }
-       // khas ykoun lifecycle dyal koula philo think and eat and sleep 
-       //makhesch ykoun deadlock
-       // khas loop thbes fach kaymout chiwahed fihoum ola ila cheb3o kamlin 
+        // khas ykoun lifecycle dyal koula philo think and eat and sleep 
+        //makhesch ykoun deadlock
+        // khas loop thbes fach kaymout chiwahed fihoum ola ila cheb3o kamlin 
 
-       // Cast the void pointer to get access to this philosopher's data.
+        // Cast the void pointer to get access to this philosopher's data.
        
-       // Assuming you add a 'program' pointer to t_philo
+        // Assuming you add a 'program' pointer to t_philo
              // The main lifecycle loop.
                  // Check if the simulation should end.
             //eat 
             //sleep
             //think
-    
 }
+
 
 int     create_philos_threads(t_process *program , pthread_t *master)
 {
@@ -264,7 +279,53 @@ int     create_philos_threads(t_process *program , pthread_t *master)
     }
     return 1;
 }
-
+void    *master_routine(void *arg)
+{
+    // khassou ychouf wach mat chi philo 
+    // khassou ychouf wach klaw mzn 
+    t_process *master_progress = (t_process *)arg;
+    while(1)
+    {
+        int i = -1;
+        int counter = 0;
+        while(++i < master_progress->N_philos)
+        {
+            pthread_mutex_lock(&master_progress->dead_lock);
+            if(get_current_time() - master_progress->philos[i].last_meal > master_progress->T_die)
+            {
+                
+                print_philo_status(&master_progress->philos[i], "is died");
+                master_progress->dead_flag = 1;
+                pthread_mutex_unlock(&master_progress->dead_lock);
+                return NULL;
+            }
+            
+            // khassou ychouf wach koula philo wsel l N_must_eat 
+            if(master_progress->N_must_eat > 0 && master_progress->philos[i].meals_eaten >= master_progress->N_must_eat)
+                counter++;
+            pthread_mutex_unlock(&master_progress->dead_lock);
+        }
+        if(counter == master_progress->N_philos)
+            return(master_progress->all_philos_eat = 1, NULL); 
+        if(master_progress->N_must_eat > 0 && master_progress->philos[i].meals_eaten >= master_progress->N_must_eat)
+        {
+            pthread_mutex_lock(&master_progress->dead_lock);
+            master_progress->all_philos_eat = 1;
+            pthread_mutex_unlock(&master_progress->dead_lock);
+            return NULL;
+        }
+       // chouf wach khassek usleep hna 
+       usleep(1000);
+    }  
+       
+}
+void    clean_up(t_process *resources)
+{
+    int i = -1;
+    while(++i < resources->N_philos)
+        pthread_mutex_destroy(resources->forks[i]);
+    
+}
 int main(int ac, char **av)
 {
     t_process program;
@@ -278,4 +339,11 @@ int main(int ac, char **av)
         return 1;
     if(!(create_philos_threads(&program, &master)))
          return 1;
+    if(pthread_create(&master, NULL, master_routine, &program) != 0)
+        return 1;
+    int i = -1;
+    while(++i < program.N_philos)
+        pthread_join(program.philos[i].thread, NULL);
+    pthread_join(master, NULL);
+    clean_up(&program);
 }
