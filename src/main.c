@@ -6,49 +6,48 @@
 /*   By: oussama <oussama@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/07/26 20:21:30 by oussama          ###   ########.fr       */
+/*   Updated: 2025/07/26 23:41:00 by oussama          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/philosopher.h"
 
-int	is_valid(long long n)
+int is_valid(unsigned int n)
 {
-	if (n <= 0 || n > 2147483647)
-		return (0);
-	return (1);
+    if(n == 0 ||  n > 2147483647)
+        return(0);
+    return 1;
 }
-
-int	is_digit(char *str)
+int is_digit(char *str)
 {
-	int	i;
+    int i;
 
-	i = 0;
-	while (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13))
-		i++;
-	if (str[i] == '-' || str[i] == '+')
-	{
-		if (str[i] == '-')
-			return (0);
-		i++;
-	}
-	while (str[i] && !(str[i] == ' ' || (str[i] >= 9 && str[i] <= 13)))
-	{
-		if (str[i] > '9' || str[i] < '0')
-			return (0);
-		i++;
-	}
-	while (str[i] && (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13)))
-		i++;
-	if (str[i] != '\0')
-		return (0);
-	return (1);
+    i = 0;
+    while(str[i] == ' ' || (str[i] >= 9 && str[i] <= 13))
+        i++;
+    if(str[i] == '-' || str[i] == '+')
+    {
+        if(str[i] == '-')
+            return 0;
+        i++;
+    }
+    while(str[i] && !(str[i] == ' ' || (str[i] >= 9 && str[i] <= 13)))
+    {
+        if(str[i] > '9' || str[i] < '0')
+            return 0;
+        i++;
+    }
+    while(str[i] && (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13)))
+        i++;
+    if(str[i] != '\0')
+        return 0;
+ 
+    return 1;
 }
-
-long long	ft_atoll(const char *str)
+unsigned int	ft_atou(const char *str)
 {
-	long long	res;
-	int			i;
+	unsigned int 	res;
+	int		i;
 
 	res = 0;
 	i = 0;
@@ -63,32 +62,32 @@ long long	ft_atoll(const char *str)
 	}
 	return (res);
 }
-
-int	check_args(int ac, char **av)
+int check_args(int ac, char **av)
 {
-	int	i;
-
-	i = 0;
-	while (++i < ac)
-	{
-		if (is_digit(av[i]) != 1)
-			return (0);
-		if (is_valid(ft_atoll(av[i])) != 1)
-			return (0);
-	}
-	return (1);
+    int i;
+      
+    i = 0;
+    while(++i < ac)
+    {
+        if(is_digit(av[i]) != 1)
+            return 0;
+        if(is_valid(ft_atou(av[i])) != 1)
+            return 0;
+        
+    }
+    return 1;
 }
-
-void	ft_putstr_fd(char *str, int fd)
+void ft_putstr_fd(char *str, int fd)
 {
-	int	i;
+    int i;
 
-	i = 0;
-	while (str[i])
-	{
-		write(fd, &str[i], 1);
-		i++;
-	}
+    i = 0;
+    while(str[i])
+    {
+        write(fd, &str[i], 1);
+        i++;
+        
+    }
 }
 
 long long	get_current_time(void)
@@ -109,14 +108,14 @@ void    ft_n3es(long long time_needed)
 }
 int	assigning_values(t_process *program, int ac, char **av)
 {
-	program->N_philos = ft_atoll(av[1]);
-	program->T_die = ft_atoll(av[2]);
-	program->T_eat = ft_atoll(av[3]);
-	program->T_sleep = ft_atoll(av[4]);
+	program->N_philos = ft_atou(av[1]);
+	program->T_die = ft_atou(av[2]);
+	program->T_eat = ft_atou(av[3]);
+	program->T_sleep = ft_atou(av[4]);
 	program->dead_flag = 0;
 	program->all_philos_eat = 0;
 	if (ac == 6)
-		program->N_must_eat = ft_atoll(av[5]);
+		program->N_must_eat = ft_atou(av[5]);
 	else
 		program->N_must_eat = -1;
 	program->start_time = get_current_time();
