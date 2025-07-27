@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oussama <oussama@student.42.fr>            +#+  +:+       +#+        */
+/*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/07/26 23:41:00 by oussama          ###   ########.fr       */
+/*   Updated: 2025/07/27 01:02:34 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -303,10 +303,10 @@ void	*master_routine(void *arg)
 				pthread_mutex_unlock(&master_progress->dead_lock);
 				return (NULL);
 			}
+			pthread_mutex_unlock(&master_progress->dead_lock);
 			if (master_progress->N_must_eat > 0
 				&& master_progress->philos[i].meals_eaten >= master_progress->N_must_eat)
 				counter++;
-			pthread_mutex_unlock(&master_progress->dead_lock);
 		}
 		if (master_progress->N_must_eat > 0 && counter == master_progress->N_philos)
 		{
