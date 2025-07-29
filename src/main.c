@@ -6,17 +6,19 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/07/27 01:02:34 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/07/29 21:31:58 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/philosopher.h"
 
-int is_valid(unsigned int n)
+
+
+int	is_valid(long long n)
 {
-    if(n == 0 ||  n > 2147483647)
-        return(0);
-    return 1;
+	if (n <= 0 || n > 2147483647)
+		return (0);
+	return (1);
 }
 int is_digit(char *str)
 {
@@ -44,10 +46,10 @@ int is_digit(char *str)
  
     return 1;
 }
-unsigned int	ft_atou(const char *str)
+long long	ft_atol(const char *str)
 {
-	unsigned int 	res;
-	int		i;
+	long long	res;
+	int			i;
 
 	res = 0;
 	i = 0;
@@ -71,7 +73,7 @@ int check_args(int ac, char **av)
     {
         if(is_digit(av[i]) != 1)
             return 0;
-        if(is_valid(ft_atou(av[i])) != 1)
+        if(is_valid(ft_atol(av[i])) != 1)
             return 0;
         
     }
@@ -98,7 +100,7 @@ long long	get_current_time(void)
 		return (-1);
 	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
-void    ft_n3es(long long time_needed)
+void    ft_usleep(long long time_needed)
 {
     long long  start_time;
 	
@@ -108,14 +110,14 @@ void    ft_n3es(long long time_needed)
 }
 int	assigning_values(t_process *program, int ac, char **av)
 {
-	program->N_philos = ft_atou(av[1]);
-	program->T_die = ft_atou(av[2]);
-	program->T_eat = ft_atou(av[3]);
-	program->T_sleep = ft_atou(av[4]);
+	program->N_philos = ft_atol(av[1]);
+	program->T_die = ft_atol(av[2]);
+	program->T_eat = ft_atol(av[3]);
+	program->T_sleep = ft_atol(av[4]);
 	program->dead_flag = 0;
 	program->all_philos_eat = 0;
 	if (ac == 6)
-		program->N_must_eat = ft_atou(av[5]);
+		program->N_must_eat = ft_atol(av[5]);
 	else
 		program->N_must_eat = -1;
 	program->start_time = get_current_time();
@@ -195,12 +197,18 @@ void	print_philo_status(t_philo *philo, char *string)
 {
 	t_process	*process_status;
 
+	long long 	timestamp;
 	process_status = philo->program;
-	pthread_mutex_lock(&process_status->write_lock);
+	
+	pthread_mutex_lock(&process_status->dead_lock);
 	if (!process_status->dead_flag && !process_status->all_philos_eat)
-		printf("%lld %d %s\n", get_current_time() - process_status->start_time,
-			philo->id, string);
-	pthread_mutex_unlock(&process_status->write_lock);
+	{
+		timestamp = get_current_time() - philo->program->start_time;
+		pthread_mutex_lock(&process_status->write_lock);
+		printf("%lld %d %s\n", timestamp, philo->id, string);
+		pthread_mutex_unlock(&process_status->write_lock);
+	}
+	pthread_mutex_unlock(&process_status->dead_lock);
 }
 
 void	philo_eat(t_philo *philo)
@@ -223,11 +231,11 @@ void	philo_eat(t_philo *philo)
 		print_philo_status(philo, "has taken a fork");
 	}
 	pthread_mutex_lock(&eat_process->dead_lock);
-	print_philo_status(philo, "is eating");
 	philo->last_meal = get_current_time();
 	philo->meals_eaten++;
 	pthread_mutex_unlock(&eat_process->dead_lock);
-	ft_n3es(eat_process->T_eat );//usleep(eat_process->T_eat * 1000);
+	print_philo_status(philo, "is eating");
+	ft_usleep(eat_process->T_eat );//usleep(eat_process->T_eat * 1000);
 	pthread_mutex_unlock(philo->l_fork);
 	pthread_mutex_unlock(philo->r_fork);
 }
@@ -240,7 +248,7 @@ void	philo_think(t_philo *philo)
 void	philo_sleep(t_philo *philo)
 {
 	print_philo_status(philo, "is sleeping");
-	ft_n3es(philo->program->T_sleep);
+	ft_usleep(philo->program->T_sleep);
 }
 
 void	*philosopher_routine(void *arg)
@@ -251,7 +259,7 @@ void	*philosopher_routine(void *arg)
 	philo = (t_philo *)arg;
 	program = philo->program;
 	if (philo->id % 2 == 0)
-		ft_n3es(1);
+		ft_usleep(1);
 	while (1)
 	{
 		pthread_mutex_lock(&program->dead_lock);
@@ -298,22 +306,33 @@ void	*master_routine(void *arg)
 			pthread_mutex_lock(&master_progress->dead_lock);
 			if (get_current_time() - master_progress->philos[i].last_meal > master_progress->T_die)
 			{
-				print_philo_status(&master_progress->philos[i], "is died");
-				master_progress->dead_flag = 1;
-				pthread_mutex_unlock(&master_progress->dead_lock);
-				return (NULL);
+				if(!master_progress->dead_flag)
+				{
+					master_progress->dead_flag = 1;
+					pthread_mutex_unlock(&master_progress->dead_lock);
+					
+					pthread_mutex_lock(&master_progress->write_lock);
+					// print_philo_status(&master_progress->philos[i], "is died");
+					printf("%lld %d %s\n", get_current_time() - master_progress->start_time,
+						master_progress->philos[i].id, "is died");
+					pthread_mutex_unlock(&master_progress->write_lock);
+					return NULL;
+				}
 			}
-			pthread_mutex_unlock(&master_progress->dead_lock);
+			
 			if (master_progress->N_must_eat > 0
 				&& master_progress->philos[i].meals_eaten >= master_progress->N_must_eat)
 				counter++;
+			pthread_mutex_unlock(&master_progress->dead_lock);
 		}
 		if (master_progress->N_must_eat > 0 && counter == master_progress->N_philos)
 		{
+			pthread_mutex_lock(&master_progress->dead_lock);
 			master_progress->all_philos_eat = 1;
+			pthread_mutex_unlock(&master_progress->dead_lock);
 			return (NULL);
 		}
-		ft_n3es(1);//usleep(1000);
+		ft_usleep(1);//usleep(1000);
 	}
 	return (NULL);
 }
@@ -346,7 +365,7 @@ int	main(int ac, char **av)
 	if (program.N_philos == 1)
 	{
 		printf("0 1 has taken a fork\n");
-		ft_n3es(program.T_die );//usleep(program.T_die * 1000);
+		ft_usleep(program.T_die );//usleep(program.T_die * 1000);
 		printf("%lld 1 is died\n", program.T_die);
 		clean_up(&program);
 		return (0);
@@ -362,3 +381,4 @@ int	main(int ac, char **av)
 	clean_up(&program);
 	return (0);
 }
+

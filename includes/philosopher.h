@@ -26,13 +26,13 @@ typedef struct s_philo
 // CRITICAL FIX: Renamed from t_prosses to t_process for consistency.
 typedef struct s_process
 {
-	unsigned int 				N_philos;
+	int 				N_philos;
 	// CRITICAL FIX: Time variables must be long long to avoid overflow.
 	long long			T_die;
 	long long    		T_eat;
 	long long			T_sleep;
-	unsigned int		N_must_eat;
-	int					all_philos_eat;
+	long long			N_must_eat;
+	long long			all_philos_eat;
 	int					dead_flag;
 	pthread_mutex_t		write_lock;
 	pthread_mutex_t		dead_lock;

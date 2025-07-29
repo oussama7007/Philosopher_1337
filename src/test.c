@@ -21,15 +21,16 @@ void    *function(void *arg)
 }
 int main()
 {
-    pthread_t thread, thread1, thread3;
-    long value = 0;
-    long value2 = 2;
-    function((void *) &value);
-    function((void *) &value2);
-    // pthread_create(&thread,NULL, function, &value);
-    // pthread_create(&thread1,NULL, function,  &value2);
-    //pthread_create(&thread3,NULL, function,  &value);
-    pthread_join(thread, NULL);
-    pthread_join(thread1, NULL);
-    pthread_join(thread3, NULL);
+    pthread_mutex_t lock;
+    pthread_mutex_init(&lock, NULL);
+    pthread_mutex_lock(&lock);
+    printf("%d", 5555);
+int ret1 = pthread_mutex_unlock(&lock);
+printf("\nret1 = %d (%s)\n", ret1, strerror(ret1));
+
+int ret2 = pthread_mutex_unlock(&lock);
+printf("ret2 = %d (%s)\n", ret2, strerror(ret2));
+
+int ret3 = pthread_mutex_unlock(&lock);
+printf("ret3 = %d (%s)\n", ret3, strerror(ret3));
 }
