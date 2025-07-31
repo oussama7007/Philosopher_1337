@@ -1,0 +1,21 @@
+  src git:(main) ✗ ./a.out 200000000 200 200 200
+ThreadSanitizer: sync allocator overflow (65536*1024). Dying.
+[1]    51047 abort      ./a.out 200000000 200 200 200
+
+
+200 200 200 200
+
+
+
+50 99 is eating
+101 1 is died
+^[[A^C
+➜  src git:(main) ✗ ./a.out  100 100 100000000 100
+
+
+
+
+1035 404 is eating
+z^Z
+[2]  + 64951 suspended  ./a.out 2000000 200000 2000000000 20000
+➜  src git:(main) ✗ ./a.out 2000000 200000 2000000000 20000 
