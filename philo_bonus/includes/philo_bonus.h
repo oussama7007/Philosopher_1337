@@ -13,4 +13,10 @@
 
 
 
+typedef struct s_process
+{
+    
+}t_process;
+
+
 #endif 
