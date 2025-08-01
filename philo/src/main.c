@@ -6,12 +6,11 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/07/31 15:25:05 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/01 16:14:02 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/philosopher.h"
-
 
 void	clean_up(t_process *resources)
 {
@@ -25,14 +24,12 @@ void	clean_up(t_process *resources)
 	free(resources->forks);
 	free(resources->philos);
 }
-
 int	is_valid(long long n)
 {
 	if (n <= 0 || n > 2147483647)
 		return (0);
 	return (1);
 }
-
 int	is_digit(char *str)
 {
 	int	i;
@@ -58,7 +55,6 @@ int	is_digit(char *str)
 		return (0);
 	return (1);
 }
-
 long long	ft_atol(const char *str)
 {
 	long long	res;
@@ -343,8 +339,7 @@ void	*master_routine(void *arg)
 				{
 					program->dead_flag = 1;
 					pthread_mutex_lock(&program->write_lock);
-					printf("%lld %d %s\n", get_current_time()
-						- program->start_time, program->philos[i].id, " died");
+					printf("%lld %d %s\n", get_current_time() - program->start_time, program->philos[i].id, " died");
 					pthread_mutex_unlock(&program->write_lock);
 				}
 				pthread_mutex_unlock(&program->dead_lock);
@@ -418,9 +413,6 @@ int	main(int ac, char **av)
 	clean_up(&program);
 	return (0);
 }
-
-
-
 
 ////// test it with all 
 /// rm all cm 
