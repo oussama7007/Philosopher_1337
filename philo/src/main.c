@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/01 20:47:39 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/01 22:03:10 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,10 +131,10 @@ void	ft_usleep(long long time_needed, t_process *program)
 		if (program->dead_flag)
 		{
 			pthread_mutex_unlock(&program->dead_lock);
-			return ; // Exit sleep early if simulation has ended
+			return ;
 		}
 		pthread_mutex_unlock(&program->dead_lock);
-		usleep(1000); // Sleep for 1ms before checking again
+		usleep(10); 
 	}
 }
 
