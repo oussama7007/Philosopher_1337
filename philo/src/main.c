@@ -6,11 +6,15 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/01 16:14:02 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/01 20:47:39 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+
+
 #include "../includes/philosopher.h"
+
+
 
 void	clean_up(t_process *resources)
 {
@@ -24,12 +28,14 @@ void	clean_up(t_process *resources)
 	free(resources->forks);
 	free(resources->philos);
 }
+
 int	is_valid(long long n)
 {
 	if (n <= 0 || n > 2147483647)
 		return (0);
 	return (1);
 }
+
 int	is_digit(char *str)
 {
 	int	i;
@@ -55,6 +61,7 @@ int	is_digit(char *str)
 		return (0);
 	return (1);
 }
+
 long long	ft_atol(const char *str)
 {
 	long long	res;
@@ -112,10 +119,7 @@ long long	get_current_time(void)
 	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
 
-// CRITICAL FIX: This is the new "interruptible" sleep function.
-// It sleeps in small chunks (1ms) and checks the simulation status
-// on each iteration. If a philosopher dies, this function will return
-// early, allowing the thread to exit its main loop promptly.
+
 void	ft_usleep(long long time_needed, t_process *program)
 {
 	long long	start_time;
@@ -130,10 +134,9 @@ void	ft_usleep(long long time_needed, t_process *program)
 			return ; // Exit sleep early if simulation has ended
 		}
 		pthread_mutex_unlock(&program->dead_lock);
-		usleep(10); // Sleep for 1ms before checking again
+		usleep(1000); // Sleep for 1ms before checking again
 	}
 }
-
 
 
 int	assigning_values(t_process *program, int ac, char **av)
@@ -220,6 +223,7 @@ int	init_program(t_process *program, int ac, char **av)
 	init_philo(program);
 	return (1);
 }
+
 
 void	print_philo_status(t_philo *philo, char *string)
 {
@@ -339,7 +343,8 @@ void	*master_routine(void *arg)
 				{
 					program->dead_flag = 1;
 					pthread_mutex_lock(&program->write_lock);
-					printf("%lld %d %s\n", get_current_time() - program->start_time, program->philos[i].id, " died");
+					printf("%lld %d %s\n", get_current_time()
+						- program->start_time, program->philos[i].id, "is died");
 					pthread_mutex_unlock(&program->write_lock);
 				}
 				pthread_mutex_unlock(&program->dead_lock);
@@ -357,23 +362,19 @@ void	*master_routine(void *arg)
 			pthread_mutex_unlock(&program->dead_lock);
 			return (NULL);
 		}
-		// Use the interruptible sleep for the master thread as well
+		
 		ft_usleep(1, program);
 	}
 	return (NULL);
 }
 
-void f()
-{
-	system("leaks a.out");
-}
 
 int	main(int ac, char **av)
 {
 	t_process	program;
 	pthread_t	master;
 	int			i;
-	// atexit(f);
+
 	if (ac < 5 || ac > 6)
 		return (ft_putstr_fd("Error: args must be 4 OR 5\n", 2), 1);
 	if (!check_args(ac, av))
@@ -406,13 +407,13 @@ int	main(int ac, char **av)
 	i = -1;
 	while (++i < program.N_philos)
 		pthread_join(program.philos[i].thread, NULL);
-
 	pthread_join(master, NULL);
-
-	
 	clean_up(&program);
 	return (0);
 }
+
+
+
 
 ////// test it with all 
 /// rm all cm 
