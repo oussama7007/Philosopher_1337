@@ -6,15 +6,11 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/01 22:03:10 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/02 01:19:05 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
-
 #include "../includes/philosopher.h"
-
-
 
 void	clean_up(t_process *resources)
 {
@@ -134,7 +130,7 @@ void	ft_usleep(long long time_needed, t_process *program)
 			return ;
 		}
 		pthread_mutex_unlock(&program->dead_lock);
-		usleep(10); 
+		usleep(100); 
 	}
 }
 
@@ -314,6 +310,7 @@ int	create_philos_threads(t_process *program)
 		if (pthread_create(&program->philos[i].thread, NULL,
 				philosopher_routine, &program->philos[i]) != 0)
 		{
+			program->dead_flag = 1;
 			ft_putstr_fd("Error: Failed to create thread.\n", 2);
 			while (--i >= 0)
 				pthread_join(program->philos[i].thread, NULL);
@@ -388,6 +385,7 @@ int	main(int ac, char **av)
 		return (1);
 	if (program.N_philos == 1)
 	{
+		pthread_mutex_lock(program.)
 		printf("0 1 has taken a fork\n");
 		ft_usleep(program.T_die, &program);
 		printf("%lld 1 is died\n", program.T_die);
@@ -396,12 +394,14 @@ int	main(int ac, char **av)
 	}
 	if (!(create_philos_threads(&program)))
 		return (clean_up(&program), 1);
-	if (pthread_create(&master, NULL, master_routine, &program) != 0)
+
+	if (pthread_create(&master, NULL, master_routine, &program) != 0 )
 	{
 		ft_putstr_fd("Error: Failed to create master thread.\n", 2);
 		i = -1;
 		while (++i < program.N_philos)
 			pthread_join(program.philos[i].thread, NULL);
+		pthread_join(master, NULL);
 		return (clean_up(&program), 1);
 	}
 	i = -1;
@@ -418,3 +418,9 @@ int	main(int ac, char **av)
 ////// test it with all 
 /// rm all cm 
 // try on bonus 
+
+
+
+
+
+// i
