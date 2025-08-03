@@ -6,12 +6,50 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/02 01:19:05 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/02 23:22:57 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/philosopher.h"
 
+long long	get_current_time(void)
+{
+	struct timeval	tv;
+
+	if (gettimeofday(&tv, NULL))
+		return (-1);
+	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+}
+
+
+
+void	ft_usleep(long long time_needed, t_process *program)
+{
+	long long	start_time;
+
+	start_time = get_current_time();
+	while (get_current_time() - start_time < time_needed)
+	{
+		pthread_mutex_lock(&program->dead_lock);
+		if (program->dead_flag)
+		{
+			pthread_mutex_unlock(&program->dead_lock);
+			return ;
+		}
+		pthread_mutex_unlock(&program->dead_lock);
+		usleep(100); 
+	}
+}
+void 	*philo_one_routine(void *arg)
+{
+		t_process *program = (t_process *)arg;
+		
+		pthread_mutex_lock(&program->forks[0]);
+		printf("[0] 1 has taken a fork\n");
+		pthread_mutex_unlock(&program->forks[0]);
+		ft_usleep(program->T_die, program);
+		return NULL;
+}
 void	clean_up(t_process *resources)
 {
 	int	i;
@@ -58,7 +96,7 @@ int	is_digit(char *str)
 	return (1);
 }
 
-long long	ft_atol(const char *str)
+long long	ft_atol(char *str)
 {
 	long long	res;
 	int			i;
@@ -76,22 +114,6 @@ long long	ft_atol(const char *str)
 	}
 	return (res);
 }
-
-int	check_args(int ac, char **av)
-{
-	int	i;
-
-	i = 0;
-	while (++i < ac)
-	{
-		if (is_digit(av[i]) != 1)
-			return (0);
-		if (is_valid(ft_atol(av[i])) != 1)
-			return (0);
-	}
-	return (1);
-}
-
 void	ft_putstr_fd(char *str, int fd)
 {
 	int	i;
@@ -105,35 +127,27 @@ void	ft_putstr_fd(char *str, int fd)
 		i++;
 	}
 }
-
-long long	get_current_time(void)
+int	check_args(int ac, char **av)
 {
-	struct timeval	tv;
+	int	i;
 
-	if (gettimeofday(&tv, NULL))
-		return (-1);
-	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
-}
-
-
-void	ft_usleep(long long time_needed, t_process *program)
-{
-	long long	start_time;
-
-	start_time = get_current_time();
-	while (get_current_time() - start_time < time_needed)
+	i = 0;
+	if (ac < 5 || ac > 6)
+		return (ft_putstr_fd("Error: args must be 4 OR 5\n", 2), 0);
+	if (ft_atol(av[1]) > 1000)
 	{
-		pthread_mutex_lock(&program->dead_lock);
-		if (program->dead_flag)
-		{
-			pthread_mutex_unlock(&program->dead_lock);
-			return ;
-		}
-		pthread_mutex_unlock(&program->dead_lock);
-		usleep(100); 
+		ft_putstr_fd("Error: Number of philosophers exceeds reasonable system limits (max 1000).\n", 2);
+		return (0);
 	}
+	while (++i < ac)
+	{
+		if (is_digit(av[i]) != 1)
+			return (ft_putstr_fd("Error: invalid arg (is not digit)\n", 2),0);
+		if (is_valid(ft_atol(av[i])) != 1)
+			return (ft_putstr_fd("Error: invalid arg \n", 2),0);
+	}
+	return (1);
 }
-
 
 int	assigning_values(t_process *program, int ac, char **av)
 {
@@ -230,7 +244,7 @@ void	print_philo_status(t_philo *philo, char *string)
 	{
 		pthread_mutex_lock(&philo->program->write_lock);
 		timestamp = get_current_time() - philo->program->start_time;
-		printf("%lld %d %s\n", timestamp, philo->id, string);
+		printf("[%lld] %d %s\n", timestamp, philo->id, string);
 		pthread_mutex_unlock(&philo->program->write_lock);
 	}
 	pthread_mutex_unlock(&philo->program->dead_lock);
@@ -257,7 +271,6 @@ void	philo_eat(t_philo *philo)
 	philo->meals_eaten++;
 	pthread_mutex_unlock(&philo->program->dead_lock);
 	print_philo_status(philo, "is eating");
-	// Use the new interruptible sleep
 	ft_usleep(philo->program->T_eat, philo->program);
 	pthread_mutex_unlock(philo->l_fork);
 	pthread_mutex_unlock(philo->r_fork);
@@ -266,7 +279,6 @@ void	philo_eat(t_philo *philo)
 void	philo_sleep(t_philo *philo)
 {
 	print_philo_status(philo, "is sleeping");
-	// Use the new interruptible sleep
 	ft_usleep(philo->program->T_sleep, philo->program);
 }
 
@@ -305,21 +317,57 @@ int	create_philos_threads(t_process *program)
 	int	i;
 
 	i = -1;
+	if (program->N_philos == 1)
+	{
+		if(pthread_create(&program->philos->thread, NULL, philo_one_routine, program) != 0)
+		{
+			ft_putstr_fd("Error: Failed to create thread of one philo.\n", 2);
+			return (0);
+		}
+		pthread_join(program->philos->thread, NULL);
+		return (1);
+	}
 	while (++i < program->N_philos)
 	{
 		if (pthread_create(&program->philos[i].thread, NULL,
 				philosopher_routine, &program->philos[i]) != 0)
 		{
 			program->dead_flag = 1;
-			ft_putstr_fd("Error: Failed to create thread.\n", 2);
 			while (--i >= 0)
 				pthread_join(program->philos[i].thread, NULL);
-			return (0);
+			return (ft_putstr_fd("Error: Failed to create thread.\n", 2),0);
 		}
 	}
 	return (1);
 }
-
+void 	if_not_dead_flag_set(t_process **program, int *i)
+{
+	(*program)->dead_flag = 1;
+	pthread_mutex_lock(&(*program)->write_lock);
+	printf("[%lld] %d %s\n", get_current_time() - (*program)->start_time, (*program)->philos[*i].id, "is died");
+	pthread_mutex_unlock(&(*program)->write_lock);
+}
+void 	set_flag_for_all_philos_eat(t_process *program)
+{
+	pthread_mutex_lock(&program->dead_lock);
+	program->all_philos_eat = 1;
+	pthread_mutex_unlock(&program->dead_lock);
+}
+int 	check_if_reached_meals_must_eat(t_process *program, int *i)
+{
+	return(program->N_must_eat != -1
+				&& program->philos[*i].meals_eaten < program->N_must_eat);
+}
+int 	is_dead(t_process **program, int *i)
+{
+	if(get_current_time() - (*program)->philos[*i].last_meal > (*program)->T_die)
+	{
+		if (!(*program)->dead_flag)
+				if_not_dead_flag_set(program , i);
+		return (0);
+	}
+	return (1);
+}
 void	*master_routine(void *arg)
 {
 	t_process	*program;
@@ -334,37 +382,24 @@ void	*master_routine(void *arg)
 		while (++i < program->N_philos)
 		{
 			pthread_mutex_lock(&program->dead_lock);
-			if (get_current_time() - program->philos[i].last_meal > program->T_die)
+			if(!is_dead(&program, &i))
 			{
-				if (!program->dead_flag)
-				{
-					program->dead_flag = 1;
-					pthread_mutex_lock(&program->write_lock);
-					printf("%lld %d %s\n", get_current_time()
-						- program->start_time, program->philos[i].id, "is died");
-					pthread_mutex_unlock(&program->write_lock);
-				}
 				pthread_mutex_unlock(&program->dead_lock);
-				return (NULL);
+				return NULL;
 			}
-			if (program->N_must_eat > 0
-				&& program->philos[i].meals_eaten < program->N_must_eat)
+			if (check_if_reached_meals_must_eat(program, &i))
 				all_are_full = 0;
 			pthread_mutex_unlock(&program->dead_lock);
 		}
 		if (program->N_must_eat > 0 && all_are_full)
-		{
-			pthread_mutex_lock(&program->dead_lock);
-			program->all_philos_eat = 1;
-			pthread_mutex_unlock(&program->dead_lock);
-			return (NULL);
-		}
-		
-		ft_usleep(1, program);
+			return (set_flag_for_all_philos_eat(program),NULL);
 	}
 	return (NULL);
 }
-
+void f()
+{
+	system("leaks a.out");
+}
 
 int	main(int ac, char **av)
 {
@@ -372,29 +407,13 @@ int	main(int ac, char **av)
 	pthread_t	master;
 	int			i;
 
-	if (ac < 5 || ac > 6)
-		return (ft_putstr_fd("Error: args must be 4 OR 5\n", 2), 1);
+	//atexit(f);
 	if (!check_args(ac, av))
-		return (ft_putstr_fd("Error: invalid arg \n", 2), 1);
-	if (ft_atol(av[1]) > 1000)
-	{
-		ft_putstr_fd("Error: Number of philosophers exceeds reasonable system limits (max 1000).\n", 2);
 		return (1);
-	}
 	if (!(init_program(&program, ac, av)))
 		return (1);
-	if (program.N_philos == 1)
-	{
-		pthread_mutex_lock(program.)
-		printf("0 1 has taken a fork\n");
-		ft_usleep(program.T_die, &program);
-		printf("%lld 1 is died\n", program.T_die);
-		clean_up(&program);
-		return (0);
-	}
 	if (!(create_philos_threads(&program)))
 		return (clean_up(&program), 1);
-
 	if (pthread_create(&master, NULL, master_routine, &program) != 0 )
 	{
 		ft_putstr_fd("Error: Failed to create master thread.\n", 2);
@@ -408,19 +427,9 @@ int	main(int ac, char **av)
 	while (++i < program.N_philos)
 		pthread_join(program.philos[i].thread, NULL);
 	pthread_join(master, NULL);
-	clean_up(&program);
-	return (0);
+	return (clean_up(&program),0);
 }
 
 
 
 
-////// test it with all 
-/// rm all cm 
-// try on bonus 
-
-
-
-
-
-// i
