@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/02 23:22:57 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/04 22:53:39 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -360,7 +360,7 @@ int 	check_if_reached_meals_must_eat(t_process *program, int *i)
 }
 int 	is_dead(t_process **program, int *i)
 {
-	if(get_current_time() - (*program)->philos[*i].last_meal > (*program)->T_die)
+	if(get_current_time() - (*program)->philos[*i].last_meal >= (*program)->T_die)
 	{
 		if (!(*program)->dead_flag)
 				if_not_dead_flag_set(program , i);
