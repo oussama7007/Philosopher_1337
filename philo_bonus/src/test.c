@@ -6,13 +6,82 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/01 09:48:33 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/07 11:12:44 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/07 15:45:20 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
 #include "../includes/philo_bonus.h"
+static int	get_length(int n)
+{
+	int	len;
 
+	len = 0;
+	if (n <= 0)
+		len++;
+	while (n != 0)
+	{
+		n /= 10;
+		len++;
+	}
+	return (len);
+}
+
+static char	*negative(int len, char *str, unsigned int num)
+{
+	while (len > 0)
+	{
+		str[len--] = (num % 10) + '0';
+		num /= 10;
+	}
+	return (str);
+}
+
+static char	*positive(int len, char *str, unsigned int num)
+{
+	while (len >= 0)
+	{
+		str[len--] = (num % 10) + '0';
+		num /= 10;
+	}
+	return (str);
+}
+
+static	char	*alloc(int len)
+{
+	char	*str;
+
+	str = (char *)malloc(sizeof(char) * (len + 1));
+	if (!str)
+		return (NULL);
+	return (str);
+}
+
+char	*ft_itoa(int n)
+{
+	char			*str;
+	int				len;
+	unsigned int	num;
+	char			*tmp;
+
+	len = get_length(n);
+	str = alloc(len);
+	if (!str)
+		return (NULL);
+	str[len--] = '\0';
+	if (n < 0)
+	{
+		str[0] = '-';
+		num = -n;
+	}
+	else
+		num = n;
+	if (n < 0)
+		tmp = negative(len, str, num);
+	else
+		tmp = positive(len, str, num);
+	return (tmp);
+}
 void	print_philo_status(t_philo *philo, char *string)
 {
     long long	timestamp;
@@ -261,39 +330,57 @@ void *death_monitor(void *arg)
     t_philo *philo = (t_philo *)arg;
     t_process *program = philo->program;
     long long current_time;
-    int meals_eaten;
+    //int meals_eaten;
 
     while (1)
     {
         // Protect access to meal data
         sem_wait(philo->meal_sem);
         current_time = get_current_time();
-        meals_eaten = philo->meals_eaten;
+       // meals_eaten = philo->meals_eaten;
         if (current_time - philo->last_meal >= program->T_die)
         {
-            sem_post(philo->meal_sem);
+           // sem_post(philo->meal_sem);
             sem_wait(program->write_sem);
             printf("[%lld] %d died\n", current_time - program->start_time, philo->id);
-            program->dead_flag = 1;
-            sem_post(program->write_sem);
+            //program->dead_flag = 1;
+            //sem_post(program->write_sem);
             exit(1);
         }
-        sem_post(program->write_sem);
-        if (program->N_must_eat != -1 && meals_eaten >= program->N_must_eat)
+        sem_post(philo->meal_sem);
+        if (program->N_must_eat != -1 && philo->meals_eaten >= program->N_must_eat)
             exit(0);
 
-        ft_usleep(1, program); // Small delay to avoid busy-waiting
+        //ft_usleep(1, program); // Small delay to avoid busy-waiting
+        usleep(100);
     }
     return (NULL);
 }
 
+
 void philosopher_routine(t_philo *philo)
 {
     t_process *program = philo->program;
-    char sem_name[50];
-    
-    // Create a unique semaphore name using the process ID
-    sprintf(sem_name, "/philo_meal_sem_%d", getpid());
+    char      *pid_str;
+    char      sem_name[50]; // Ensure buffer is large enough
+
+    // 1. Convert the integer PID to a string
+    pid_str = ft_itoa(getpid());
+    if (!pid_str)
+    {
+        ft_putstr_fd("Error: ft_itoa memory allocation failed\n", 2);
+        exit(1);
+    }
+
+    // 2. Manually concatenate strings to create the semaphore name
+    strcpy(sem_name, "/philo_meal_sem_"); // Base name
+    strcat(sem_name, pid_str);          // Append the PID string
+
+    // Free the allocated string for the PID
+    free(pid_str);
+
+    // Unlink any previous semaphore with the same name before creating
+    sem_unlink(sem_name);
     philo->meal_sem = sem_open(sem_name, O_CREAT | O_EXCL, 0644, 1);
     if (philo->meal_sem == SEM_FAILED)
     {
@@ -301,7 +388,7 @@ void philosopher_routine(t_philo *philo)
         exit(1);
     }
     
-    // Protect initial access to last_meal
+    // --- The rest of your routine ---
     sem_wait(philo->meal_sem);
     philo->last_meal = get_current_time();
     sem_post(philo->meal_sem);
@@ -320,17 +407,15 @@ void philosopher_routine(t_philo *philo)
     while (1)
     {
         philo_eat(philo);
-        
         if (program->N_must_eat != -1 && philo->meals_eaten >= program->N_must_eat)
             break;
-            
         philo_sleep(philo);
         philo_think(philo);
     }
     
     pthread_join(philo->monitor_thread, NULL);
     sem_close(philo->meal_sem);
-    sem_unlink(sem_name);  // Clean up the semaphore
+    sem_unlink(sem_name); // Clean up the semaphore
     exit(0);
 }
 int	create_processes(t_process *program)
@@ -364,15 +449,14 @@ void clean_up(t_process *program)
 {
     int i;
     char sem_name[50];
-
+    char *pid_str;
+    
     i = -1;
     while (++i < program->N_philos)
     {
         if (program->philos[i].pid > 0)
         {
             kill(program->philos[i].pid, SIGKILL);
-            sprintf(sem_name, "/philo_meal_sem_%d", program->philos[i].pid);
-            sem_unlink(sem_name);  // Unlink child-specific semaphores
         }
     }
     // Close and unlink shared semaphores (e.g., forks_sem, write_sem, dead_sem)
@@ -382,7 +466,8 @@ void clean_up(t_process *program)
     sem_unlink("/forks");
     sem_unlink("/write");
     sem_unlink("/dead");
-    free(program->philos);
+    if(program->philos)
+        free(program->philos);
 
 }
 void wait_for_processes(t_process *program)
@@ -416,8 +501,13 @@ void wait_for_processes(t_process *program)
     }
 }
 
+void f()
+{
+    system("leaks a.out");
+}
 int	main(int ac, char **av)
 {
+    //atexit(f);
     t_process	program;
     
     if (!check_args(ac, av))
