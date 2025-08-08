@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/04 22:53:39 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/07 16:04:40 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,9 +20,6 @@ long long	get_current_time(void)
 		return (-1);
 	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
-
-
-
 void	ft_usleep(long long time_needed, t_process *program)
 {
 	long long	start_time;
