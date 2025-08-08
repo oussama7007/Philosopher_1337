@@ -6,10 +6,9 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/01 09:48:33 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/07 15:45:20 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/08 08:56:08 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include "../includes/philo_bonus.h"
 static int	get_length(int n)
@@ -448,9 +447,6 @@ int	create_processes(t_process *program)
 void clean_up(t_process *program)
 {
     int i;
-    char sem_name[50];
-    char *pid_str;
-    
     i = -1;
     while (++i < program->N_philos)
     {
