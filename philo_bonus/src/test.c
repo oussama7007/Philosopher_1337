@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/01 09:48:33 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/08 08:56:08 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/09 08:18:16 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,17 +86,18 @@ void	print_philo_status(t_philo *philo, char *string)
     long long	timestamp;
 
     sem_wait(philo->program->write_sem);
-    if (!philo->program->dead_flag)
+    timestamp = get_current_time() - philo->program->start_time;
+    if(timestamp == -1)
     {
-        timestamp = get_current_time() - philo->program->start_time;
-        printf("[%lld] %d %s\n", timestamp, philo->id, string);
+        // hndle what it should do whene it return -1
     }
+    printf("[%lld] %d %s\n", timestamp, philo->id, string);
     sem_post(philo->program->write_sem);
 }
 void	philo_sleep(t_philo *philo)
 {
     print_philo_status(philo, "is sleeping");
-    ft_usleep(philo->program->T_sleep, philo->program);
+    ft_usleep(philo->program->t_sleep, philo->program);
 }
 
 void	philo_think(t_philo *philo)
@@ -118,25 +119,21 @@ void	ft_usleep(long long time_needed, t_process *program)
 
     start_time = get_current_time();
     while (get_current_time() - start_time < time_needed)
-    {
-        if (program->dead_flag)
-            return;
         usleep(100);
-    }
 }
 int	assigning_values(t_process *program, int ac, char **av)
 {
-    program->N_philos = ft_atol(av[1]);
-    program->T_die = ft_atol(av[2]);
-    program->T_eat = ft_atol(av[3]);
-    program->T_sleep = ft_atol(av[4]);
-    program->dead_flag = 0;
+    program->n_philos = ft_atol(av[1]);
+    program->t_die = ft_atol(av[2]);
+    program->t_eat = ft_atol(av[3]);
+    program->t_sleep = ft_atol(av[4]);
+   
     program->all_ate = 0;
     
     if (ac == 6)
-        program->N_must_eat = ft_atol(av[5]);
+        program->n_must_eat = ft_atol(av[5]);
     else
-        program->N_must_eat = -1;
+        program->n_must_eat = -1;
         
     program->start_time = get_current_time();
     if (program->start_time < 0)
@@ -149,18 +146,12 @@ int	assigning_values(t_process *program, int ac, char **av)
 
 int	init_semaphores(t_process *program)
 {
-    sem_unlink("/forks");
-    sem_unlink("/write");
-    sem_unlink("/dead");
-    sem_unlink("/meal_check");
-
-    program->forks_sem = sem_open("/forks", O_CREAT, 0644, program->N_philos);
+    program->forks_sem = sem_open("/forks", O_CREAT, 0644, program->n_philos);
     program->write_sem = sem_open("/write", O_CREAT, 0644, 1);
-    program->dead_sem = sem_open("/dead", O_CREAT, 0644, 1);
-    program->meal_check_sem = sem_open("/meal_check", O_CREAT, 0644, 1);
+   
+    
 
-    if (program->forks_sem == SEM_FAILED || program->write_sem == SEM_FAILED ||
-        program->dead_sem == SEM_FAILED || program->meal_check_sem == SEM_FAILED)
+    if (program->forks_sem == SEM_FAILED || program->write_sem == SEM_FAILED  )
     {
         ft_putstr_fd("Error: semaphore initialization failed\n", 2);
         return (0);
@@ -172,7 +163,7 @@ int init_philosophers(t_process *program)
 {
     int i;
     
-    program->philos = malloc(sizeof(t_philo) * program->N_philos);
+    program->philos = malloc(sizeof(t_philo) * program->n_philos);
     if (!program->philos)
     {
         ft_putstr_fd("Error: philosopher allocation failed\n", 2);
@@ -180,7 +171,7 @@ int init_philosophers(t_process *program)
     }
     
     i = -1;
-    while (++i < program->N_philos)
+    while (++i < program->n_philos)
     {
         program->philos[i].id = i + 1;
         program->philos[i].meals_eaten = 0;
@@ -207,7 +198,7 @@ void philo_eat(t_philo *philo)
     print_philo_status(philo, "is eating");
     // Protect meal data
     
-    ft_usleep(philo->program->T_eat, philo->program);
+    ft_usleep(philo->program->t_eat, philo->program);
 
     sem_post(philo->program->forks_sem); // Release forks
     sem_post(philo->program->forks_sem);
@@ -315,14 +306,13 @@ int	init_program(t_process *program, int ac, char **av)
     {
         sem_close(program->forks_sem);
         sem_close(program->write_sem);
-        sem_close(program->dead_sem);
-        // sem_close(program->meal_check_sem);
+       
+        
         return (0);
     }
     
     return (1);
 }
-
 
 void *death_monitor(void *arg)
 {
@@ -333,23 +323,23 @@ void *death_monitor(void *arg)
 
     while (1)
     {
-        // Protect access to meal data
+       
         sem_wait(philo->meal_sem);
         current_time = get_current_time();
-       // meals_eaten = philo->meals_eaten;
-        if (current_time - philo->last_meal >= program->T_die)
+        
+        if (current_time - philo->last_meal >= program->t_die)
         {
-           // sem_post(philo->meal_sem);
             sem_wait(program->write_sem);
             printf("[%lld] %d died\n", current_time - program->start_time, philo->id);
-            //program->dead_flag = 1;
-            //sem_post(program->write_sem);
             exit(1);
         }
-        sem_post(philo->meal_sem);
-        if (program->N_must_eat != -1 && philo->meals_eaten >= program->N_must_eat)
+        
+        if (program->n_must_eat != -1 && philo->meals_eaten >= program->n_must_eat)
+        {
+            sem_post(philo->meal_sem);
             exit(0);
-
+        }
+        sem_post(philo->meal_sem);
         //ft_usleep(1, program); // Small delay to avoid busy-waiting
         usleep(100);
     }
@@ -397,6 +387,7 @@ void philosopher_routine(t_philo *philo)
         ft_putstr_fd("Error: Failed to create monitor thread.\n", 2);
         sem_close(philo->meal_sem);
         sem_unlink(sem_name);
+        free(pid_str);
         exit(1);
     }
     
@@ -405,13 +396,13 @@ void philosopher_routine(t_philo *philo)
         
     while (1)
     {
-        philo_eat(philo);
-        if (program->N_must_eat != -1 && philo->meals_eaten >= program->N_must_eat)
+        if (program->n_must_eat != -1 && philo->meals_eaten >= program->n_must_eat)
             break;
+        philo_eat(philo);
         philo_sleep(philo);
         philo_think(philo);
     }
-    
+    free(pid_str); 
     pthread_join(philo->monitor_thread, NULL);
     sem_close(philo->meal_sem);
     sem_unlink(sem_name); // Clean up the semaphore
@@ -423,7 +414,7 @@ int	create_processes(t_process *program)
     pid_t	pid;
 
     i = -1;
-    while (++i < program->N_philos)
+    while (++i < program->n_philos)
     {
         pid = fork();
         if (pid < 0)
@@ -448,20 +439,16 @@ void clean_up(t_process *program)
 {
     int i;
     i = -1;
-    while (++i < program->N_philos)
+    while (++i < program->n_philos)
     {
         if (program->philos[i].pid > 0)
-        {
             kill(program->philos[i].pid, SIGKILL);
-        }
     }
-    // Close and unlink shared semaphores (e.g., forks_sem, write_sem, dead_sem)
+    
     sem_close(program->forks_sem);
     sem_close(program->write_sem);
-    sem_close(program->dead_sem);
     sem_unlink("/forks");
     sem_unlink("/write");
-    sem_unlink("/dead");
     if(program->philos)
         free(program->philos);
 
@@ -474,15 +461,14 @@ void wait_for_processes(t_process *program)
     
     while (1)
     {
-        pid = waitpid(-1, &status, 0);
-        if (pid <= 0)
+        
+        if (waitpid(-1, &status, 0) <= 0)
             break;
             
         if (WIFEXITED(status) && WEXITSTATUS(status) == 1)
         {
-            program->dead_flag = 1;
             i = -1;
-            while (++i < program->N_philos)
+            while (++i < program->n_philos)
                 if (program->philos[i].pid > 0 && program->philos[i].pid != pid)
                     kill(program->philos[i].pid, SIGKILL);
             break;
@@ -491,7 +477,7 @@ void wait_for_processes(t_process *program)
         if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
         {
             program->all_ate++;
-            if (program->all_ate == program->N_philos)
+            if (program->all_ate == program->n_philos)
                 break;
         }
     }
@@ -503,7 +489,6 @@ void f()
 }
 int	main(int ac, char **av)
 {
-    //atexit(f);
     t_process	program;
     
     if (!check_args(ac, av))

@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/20 10:38:30 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/07 16:04:40 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/09 05:12:58 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ void 	*philo_one_routine(void *arg)
 		pthread_mutex_lock(&program->forks[0]);
 		printf("[0] 1 has taken a fork\n");
 		pthread_mutex_unlock(&program->forks[0]);
-		ft_usleep(program->T_die, program);
+		ft_usleep(program->t_die, program);
 		return NULL;
 }
 void	clean_up(t_process *resources)
@@ -52,7 +52,7 @@ void	clean_up(t_process *resources)
 	int	i;
 
 	i = -1;
-	while (++i < resources->N_philos)
+	while (++i < resources->n_philos)
 		pthread_mutex_destroy(&resources->forks[i]);
 	pthread_mutex_destroy(&resources->write_lock);
 	pthread_mutex_destroy(&resources->dead_lock);
@@ -148,16 +148,16 @@ int	check_args(int ac, char **av)
 
 int	assigning_values(t_process *program, int ac, char **av)
 {
-	program->N_philos = ft_atol(av[1]);
-	program->T_die = ft_atol(av[2]);
-	program->T_eat = ft_atol(av[3]);
-	program->T_sleep = ft_atol(av[4]);
+	program->n_philos = ft_atol(av[1]);
+	program->t_die = ft_atol(av[2]);
+	program->t_eat = ft_atol(av[3]);
+	program->t_sleep = ft_atol(av[4]);
 	program->dead_flag = 0;
 	program->all_philos_eat = 0;
 	if (ac == 6)
-		program->N_must_eat = ft_atol(av[5]);
+		program->n_must_eat = ft_atol(av[5]);
 	else
-		program->N_must_eat = -1;
+		program->n_must_eat = -1;
 	program->start_time = get_current_time();
 	if (program->start_time < 0)
 		return (ft_putstr_fd("gettimeofday failed\n", 2), 0);
@@ -166,10 +166,10 @@ int	assigning_values(t_process *program, int ac, char **av)
 
 int	allocate_resources(t_process *program)
 {
-	program->forks = malloc(sizeof(pthread_mutex_t) * program->N_philos);
+	program->forks = malloc(sizeof(pthread_mutex_t) * program->n_philos);
 	if (!program->forks)
 		return (0);
-	program->philos = malloc(sizeof(t_philo) * program->N_philos);
+	program->philos = malloc(sizeof(t_philo) * program->n_philos);
 	if (!program->philos)
 		return (free(program->forks), 0);
 	return (1);
@@ -187,7 +187,7 @@ int	init_mutexs(t_process *program)
 		return (0);
 	}
 	i = -1;
-	while (++i < program->N_philos)
+	while (++i < program->n_philos)
 	{
 		if (pthread_mutex_init(&program->forks[i], NULL) != 0)
 		{
@@ -206,13 +206,13 @@ void	init_philo(t_process *program)
 	int	i;
 
 	i = -1;
-	while (++i < program->N_philos)
+	while (++i < program->n_philos)
 	{
 		program->philos[i].id = i + 1;
 		program->philos[i].meals_eaten = 0;
 		program->philos[i].last_meal = program->start_time;
 		program->philos[i].r_fork = &program->forks[i];
-		program->philos[i].l_fork = &program->forks[(i + 1) % program->N_philos];
+		program->philos[i].l_fork = &program->forks[(i + 1) % program->n_philos];
 		program->philos[i].program = program;
 	}
 }
@@ -268,7 +268,7 @@ void	philo_eat(t_philo *philo)
 	philo->meals_eaten++;
 	pthread_mutex_unlock(&philo->program->dead_lock);
 	print_philo_status(philo, "is eating");
-	ft_usleep(philo->program->T_eat, philo->program);
+	ft_usleep(philo->program->t_eat, philo->program);
 	pthread_mutex_unlock(philo->l_fork);
 	pthread_mutex_unlock(philo->r_fork);
 }
@@ -276,7 +276,7 @@ void	philo_eat(t_philo *philo)
 void	philo_sleep(t_philo *philo)
 {
 	print_philo_status(philo, "is sleeping");
-	ft_usleep(philo->program->T_sleep, philo->program);
+	ft_usleep(philo->program->t_sleep, philo->program);
 }
 
 void	philo_think(t_philo *philo)
@@ -314,7 +314,7 @@ int	create_philos_threads(t_process *program)
 	int	i;
 
 	i = -1;
-	if (program->N_philos == 1)
+	if (program->n_philos == 1)
 	{
 		if(pthread_create(&program->philos->thread, NULL, philo_one_routine, program) != 0)
 		{
@@ -324,7 +324,7 @@ int	create_philos_threads(t_process *program)
 		pthread_join(program->philos->thread, NULL);
 		return (1);
 	}
-	while (++i < program->N_philos)
+	while (++i < program->n_philos)
 	{
 		if (pthread_create(&program->philos[i].thread, NULL,
 				philosopher_routine, &program->philos[i]) != 0)
@@ -352,12 +352,12 @@ void 	set_flag_for_all_philos_eat(t_process *program)
 }
 int 	check_if_reached_meals_must_eat(t_process *program, int *i)
 {
-	return(program->N_must_eat != -1
-				&& program->philos[*i].meals_eaten < program->N_must_eat);
+	return(program->n_must_eat != -1
+				&& program->philos[*i].meals_eaten < program->n_must_eat);
 }
 int 	is_dead(t_process **program, int *i)
 {
-	if(get_current_time() - (*program)->philos[*i].last_meal >= (*program)->T_die)
+	if(get_current_time() - (*program)->philos[*i].last_meal >= (*program)->t_die)
 	{
 		if (!(*program)->dead_flag)
 				if_not_dead_flag_set(program , i);
@@ -376,7 +376,7 @@ void	*master_routine(void *arg)
 	{
 		i = -1;
 		all_are_full = 1;
-		while (++i < program->N_philos)
+		while (++i < program->n_philos)
 		{
 			pthread_mutex_lock(&program->dead_lock);
 			if(!is_dead(&program, &i))
@@ -388,14 +388,10 @@ void	*master_routine(void *arg)
 				all_are_full = 0;
 			pthread_mutex_unlock(&program->dead_lock);
 		}
-		if (program->N_must_eat > 0 && all_are_full)
+		if (program->n_must_eat > 0 && all_are_full)
 			return (set_flag_for_all_philos_eat(program),NULL);
 	}
 	return (NULL);
-}
-void f()
-{
-	system("leaks a.out");
 }
 
 int	main(int ac, char **av)
@@ -403,8 +399,7 @@ int	main(int ac, char **av)
 	t_process	program;
 	pthread_t	master;
 	int			i;
-
-	//atexit(f);
+	
 	if (!check_args(ac, av))
 		return (1);
 	if (!(init_program(&program, ac, av)))
@@ -415,13 +410,13 @@ int	main(int ac, char **av)
 	{
 		ft_putstr_fd("Error: Failed to create master thread.\n", 2);
 		i = -1;
-		while (++i < program.N_philos)
+		while (++i < program.n_philos)
 			pthread_join(program.philos[i].thread, NULL);
 		pthread_join(master, NULL);
 		return (clean_up(&program), 1);
 	}
 	i = -1;
-	while (++i < program.N_philos)
+	while (++i < program.n_philos)
 		pthread_join(program.philos[i].thread, NULL);
 	pthread_join(master, NULL);
 	return (clean_up(&program),0);

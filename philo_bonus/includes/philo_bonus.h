@@ -53,16 +53,16 @@ typedef struct s_philo
 
 typedef struct s_process
 {
-    int             N_philos;
-    long long       T_die;
-    long long       T_eat;
-    long long       T_sleep;
-    long long       N_must_eat;
+    int             n_philos;
+    long long       t_die;
+    long long       t_eat;
+    long long       t_sleep;
+    long long       n_must_eat;
     int             all_ate;
-    int             dead_flag;
+ 
     sem_t           *forks_sem;
     sem_t           *write_sem;
-    sem_t           *dead_sem;
+ 
     sem_t           *meal_check_sem;
     long long       start_time;
     t_philo         *philos;
