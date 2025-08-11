@@ -31,8 +31,8 @@ typedef struct s_process
 	long long			t_die;
 	long long    		t_eat;
 	long long			t_sleep;
-	long long			n_must_eat;
-	long long			all_philos_eat;
+	int 				n_must_eat;
+	int 				all_philos_eat;
 	int					dead_flag;
 	pthread_mutex_t		write_lock;
 	pthread_mutex_t		dead_lock;

@@ -13,14 +13,14 @@
 
 
 
-long long counter = 0;
+//long long counter = 0;
 
 
 
 typedef struct s_data
 {
     pthread_mutex_t lock;
-   //sem_t *lock;
+    //sem_t *lock;
     long long counter;
 }t_data;
 
@@ -31,10 +31,10 @@ void *philo_routine(void *arg)
     
     for (int i = 0; i < 32100; i++)
     {
-       // sem_wait(data->lock);
+       //sem_wait(data->lock);
         pthread_mutex_lock(&data->lock);
         data->counter++;
-        pthread_mutex_unlock(&data->lock);
+       pthread_mutex_unlock(&data->lock);
         //sem_post(data->lock);
     }
     
@@ -47,12 +47,12 @@ int main()
     data.counter = 0;
 
     pthread_mutex_init(&data.lock, NULL);
-   // data.lock = sem_open("/mysem", O_CREAT, 0644, 1);
-    // if(data.lock == SEM_FAILED)
-    // {
-    //     printf("sem_open error ");
-    //     return 1;
-    // }
+//    data.lock = sem_open("/mysem", O_CREAT, 0644, 1);
+//      if(data.lock == SEM_FAILED)
+//     {
+//          printf("sem_open error ");
+//          return 1;
+//     }
     pthread_create(&t1, NULL, philo_routine, &data);
     pthread_create(&t2, NULL, philo_routine, &data);
 

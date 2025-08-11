@@ -1,27 +1,3 @@
-
-
-// # ifndef PHILO_BONUS
-// #define PHILO_BONUS
-
-
-// # include <stdio.h>
-// # include <unistd.h>
-// # include <string.h>
-// # include <pthread.h>
-// # include <stdlib.h>
-// # include <sys/time.h>
-
-
-
-// typedef struct s_process
-// {
-    
-// }t_process;
-
-
-// #endif 
-
-
 #ifndef PHILO_BONUS_H
 # define PHILO_BONUS_H
 
@@ -62,8 +38,8 @@ typedef struct s_process
  
     sem_t           *forks_sem;
     sem_t           *write_sem;
+    sem_t           *room_sem;  // Added to prevent deadlock
  
-    sem_t           *meal_check_sem;
     long long       start_time;
     t_philo         *philos;
 } t_process;
@@ -88,6 +64,12 @@ void        ft_putstr_fd(char *str, int fd);
 int         create_processes(t_process *program);
 void        philosopher_routine(t_philo *philo);
 void        *death_monitor(void *arg);
+
+// Actions
+void        print_philo_status(t_philo *philo, char *string);
+void        philo_eat(t_philo *philo);
+void        philo_sleep(t_philo *philo);
+void        philo_think(t_philo *philo);
 
 // Cleanup
 void        clean_up(t_process *program);
