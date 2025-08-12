@@ -6,7 +6,7 @@
 /*   By: oait-si- <oait-si-@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/01 09:48:33 by oait-si-          #+#    #+#             */
-/*   Updated: 2025/08/10 02:36:47 by oait-si-         ###   ########.fr       */
+/*   Updated: 2025/08/12 20:16:48 by oait-si-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -414,7 +414,7 @@ void philosopher_routine(t_philo *philo)
     }
     ft_strcpy(sem_name, "/philo_meal_sem_");
     ft_strcat(sem_name, pid_str);
-    free(pid_str);  // Free here, after use
+    free(pid_str);  
     sem_unlink(sem_name);
     philo->meal_sem = sem_open(sem_name, O_CREAT | O_EXCL, 0644, 1);
     if (philo->meal_sem == SEM_FAILED)
